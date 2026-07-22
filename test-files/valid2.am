@@ -1,0 +1,11 @@
+; valid2.as - macros, entry/extern, and a string
+.entry START
+.extern helper
+
+
+START: add $1, $1, $2
+ la MSG
+ call helper
+ jmp DONE
+DONE: hlt
+MSG: .asciz "hi"
