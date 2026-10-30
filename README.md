@@ -25,8 +25,6 @@ Labels can be referenced before they're defined, so the source can't be translat
 
 If any stage reports an error, that file's pipeline stops immediately (errors print with their line number) and the assembler moves on to the next input file — no partial output is ever produced for a file that failed.
 
-A full breakdown of every module and the reasoning behind specific design decisions is in [`How_The_Assembler_Works.pdf`](How_The_Assembler_Works.pdf).
-
 ## Project structure
 
 ```
@@ -34,8 +32,7 @@ A full breakdown of every module and the reasoning behind specific design decisi
 ├── .c/             all .c files (one module per pipeline stage/data structure)
 ├── .h/              matching .h files
 ├── test-files/       example .as inputs, plus their generated outputs
-├── Makefile
-└── How_The_Assembler_Works.pdf   detailed write-up of the whole design
+└── Makefile
 ```
 
 Each module is a `.h`/`.c` pair with one clear responsibility — e.g. `symbol_table` only manages the label table, `memory_image` only manages the simulated machine memory, `first_pass`/`second_pass` only implement their half of the two-pass algorithm.
