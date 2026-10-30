@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# The .as files are this project's assembly, not ActionScript, so keep them out of GitHub's language stats
+test-files/** linguist-vendored
