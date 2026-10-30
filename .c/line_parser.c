@@ -163,6 +163,12 @@ int is_valid_string_literal(const char *text, char *out_string)
 
     length = strlen(text);
 
+    /* spaces after the closing quote are not part of the string, so ignore them */
+    while (length > 0 && (text[length - 1] == ' ' || text[length - 1] == '\t'))
+    {
+        length--;
+    }
+
     if (length < 2 || text[0] != '"' || text[length - 1] != '"')
     {
         return FALSE;

@@ -254,27 +254,32 @@ static void process_asciz_directive(int has_label, const char *label, const char
 /* handles a .extern directive: declares a symbol that is defined in another file */
 static void process_extern_directive(const char *operand_text, int line_number)
 {
-    char extern_name[MAX_LINE_LENGTH + 1];
+    char operands[MAX_OPERANDS][MAX_LINE_LENGTH + 1];
+    int operand_count;
     const Symbol *existing;
 
-    get_first_word(operand_text, extern_name);
+    if (!split_operands(operand_text, operands, &operand_count) || operand_count != 1)
+    {
+        report_error(line_number, ".extern takes exactly one label");
+        return;
+    }
 
-    if (!is_valid_label_name(extern_name))
+    if (!is_valid_label_name(operands[0]))
     {
         report_error(line_number, "not a legal label name");
         return;
     }
 
-    if (is_reserved_word(extern_name))
+    if (is_reserved_word(operands[0]))
     {
         report_error(line_number, "label name cannot be an instruction or directive name");
         return;
     }
 
-    existing = find_symbol(extern_name);
+    existing = find_symbol(operands[0]);
     if (existing == NULL)
     {
-        add_symbol(extern_name, 0, SYMBOL_EXTERNAL);
+        add_symbol(operands[0], 0, SYMBOL_EXTERNAL);
     }
     else if (existing->kind != SYMBOL_EXTERNAL)
     {
@@ -439,6 +444,15 @@ int run_first_pass(const char *filename)
         if (type == LINE_EMPTY || type == LINE_COMMENT)
         {
             continue;
+        }
+
+        /* stop before this line could write past the end of an image */
+        /* one data line stores at most MAX_OPERANDS 4-byte values, so that much room must be free */
+        if ((type == LINE_INSTRUCTION && get_ic() - IC_START + BYTES_PER_INSTRUCTION > MAX_CODE_IMAGE_SIZE) ||
+            (type == LINE_DIRECTIVE && get_dc() + MAX_OPERANDS * 4 > MAX_DATA_IMAGE_SIZE))
+        {
+            report_error(line_number, "program is too large for the memory image");
+            break;
         }
 
         has_label = extract_label(line, label, &rest);

@@ -126,6 +126,12 @@ int run_preassembler(const char *input_filename, const char *output_filename)
         macro = find_macro(first_word);
         if (macro != NULL)
         {
+            if (!is_blank(skip_first_word(line)))
+            {
+                report_error(line_number, "extra characters after macro call");
+                continue;
+            }
+
             body_line = macro->body_head;
             while (body_line != NULL)
             {
@@ -159,7 +165,12 @@ int run_preassembler(const char *input_filename, const char *output_filename)
                 continue;
             }
 
-            add_macro(current_macro_name);
+            if (!add_macro(current_macro_name))
+            {
+                report_error(line_number, "macro is already defined");
+            }
+
+            /* even for a duplicate, skip over its body so it causes no extra errors */
             inside_macro = TRUE;
             continue;
         }
@@ -170,13 +181,20 @@ int run_preassembler(const char *input_filename, const char *output_filename)
             continue;
         }
 
-        if (contains_word(line, "mcro") || contains_word(line, "mcroend"))
+        /* comments and quoted strings may use these words freely, they are just text there */
+        if (classify_line(line) != LINE_COMMENT && strchr(line, '"') == NULL &&
+            (contains_word(line, "mcro") || contains_word(line, "mcroend")))
         {
             report_error(line_number, "mcro or mcroend must be the first word on its line");
             continue;
         }
 
         fprintf(output_file, "%s\n", line);
+    }
+
+    if (inside_macro)
+    {
+        report_error(line_number, "macro definition is missing its mcroend");
     }
 
     fclose(input_file);

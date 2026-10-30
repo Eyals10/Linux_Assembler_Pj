@@ -59,10 +59,18 @@ static void process_file(const char *input_filename)
     make_filename(base_name, ENTRIES_EXTENSION, ent_filename);
     make_filename(base_name, EXTERNALS_EXTENSION, ext_filename);
 
+    /* delete output from an earlier run, so a failed run can't leave it looking current */
+    remove(ob_filename);
+    remove(ent_filename);
+    remove(ext_filename);
+
     if (!run_preassembler(input_filename, am_filename))
     {
         return;
     }
+
+    /* both passes read the .am file, so their line numbers belong to it, not to the .as file */
+    errors_start_file(am_filename);
 
     if (!run_first_pass(am_filename))
     {

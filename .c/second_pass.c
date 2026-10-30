@@ -197,12 +197,17 @@ static void process_instruction_line(const char *rest, int current_ic, int line_
 /* handles an .entry line: marks the operand symbol as an entry point */
 static void process_entry_directive(const char *operand_text, int line_number)
 {
-    char entry_name[MAX_LINE_LENGTH + 1];
+    char operands[MAX_OPERANDS][MAX_LINE_LENGTH + 1];
+    int operand_count;
     const Symbol *target;
 
-    get_first_word(operand_text, entry_name);
+    if (!split_operands(operand_text, operands, &operand_count) || operand_count != 1 || !is_valid_label_name(operands[0]))
+    {
+        report_error(line_number, ".entry takes exactly one label");
+        return;
+    }
 
-    target = find_symbol(entry_name);
+    target = find_symbol(operands[0]);
     if (target == NULL)
     {
         report_error(line_number, "entry symbol was not defined in this file");
@@ -215,7 +220,7 @@ static void process_entry_directive(const char *operand_text, int line_number)
         return;
     }
 
-    mark_entry(entry_name);
+    mark_entry(operands[0]);
 }
 
 /* runs the second pass over filename (the expanded .am file), completing every deferred instruction */
